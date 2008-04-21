@@ -109,33 +109,67 @@ function visualize_mousemove(){
 }
 
 function visKeySingle(feelObj){
-    document.body.innerHTML += "<span style='position:absolute;left:" +
+    var nickOrIP  = feelObj.username;
+    if (nickOrIP.length == 0) 
+        nickOrIP = feelObj.ip;
+		
+	var fontSize = (feelObj.hover / (data_feelObjects.length * 75));
+	if(fontSize < 100)
+		fontSize = 100;
+	else if(fontSize > 500)
+		fontSize = 500;
+	var newTag = "<span title='keypress by " + nickOrIP +"' style='position:absolute;left:" +
     feelObj.x +
     ";top:" +
     feelObj.y +
-    ";font-size:" +
-    (feelObj.hover / 200) +
+    ";color:#" +  str2hex(nickOrIP)  +  
+	";font-size:" + fontSize +
     "%'>" +
     String.fromCharCode(feelObj.keypress) +
     "</span>";
+	document.body.innerHTML += newTag;
 }
 
 function drawDot(feelObj){
-    //lemme
-    log('DRAWDOT: ' + feelObj.x + ',' + feelObj.y + ',' + hover)
-    var nick = feelObj.username;
-    if (nick.length == 0) 
-        nick = feelObj.ip;//ok u go
-    document.body.innerHTML += "<span style='position:absolute;left:" +
-    feelObj.x +
-    ";top:" +
-    feelObj.y +
-    ";'>" +
-    nick +
-    "</span>";
+	log('DRAWDOT: ' + enumObj(feelObj));
+    var nickOrIP  = feelObj.username;
+    if (nickOrIP.length == 0) 
+        nickOrIP = feelObj.ip;
+		
+	var fontSize = (feelObj.hover / (data_feelObjects.length * 75));
+	if(fontSize < 100)
+		fontSize = 100;
+	else if(fontSize > 500)
+		fontSize = 500;
+	
+//	var msNow = (new Date().getTime());	
+//	var msThen = (new Date(feelObj.date).getTime());
+//	var opacity = msThen - msNow;
+	var newTag =
+	"<span title='click by " + nickOrIP +"' style='position:absolute;left:" + feelObj.x +
+    ";top:" + feelObj.y + ";color:#" + str2hex(nickOrIP) +  
+	";font-size:" + fontSize + "%" + 
+//	"filter:alpha(opacity=" + opacitypct +  ");" +
+//	"opacity: " + opacity +
+	";'>.</span>";
+	document.body.innerHTML += newTag; 
 }
-
+var clearLogId = 0;
 function log(s){
-    $('log').value += s + '\n';
-    $('log').scrollTop = $('log').scrollHeight;
+    $('log').innerHTML = s;
+	if(clearLogId > 0)
+		window.clearTimeout(clearLogId);
+	clearLogId = window.setTimeout(function(){ $('log').innerHTML = ''; }, 3000);
+ }
+
+function str2hex(s){
+	var n = "";
+	var N = 0;
+	for(var ch in s)
+		n+=ch.charCodeAt(0);
+	N=parseInt(n);
+	var eos = 6;
+	if(s.length < 6)
+		eos = s.length;
+	return N.toString(16).substring(0, eos);	
 }

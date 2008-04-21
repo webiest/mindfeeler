@@ -1,19 +1,29 @@
+html {
+	cursor:crosshair;
+}
+body {
+	cursor:crosshair;
+	width:100%;
+	height:100%;
+}
 #greeting {
-    margin-left: 40%;
-    width: 400px;
+    /*margin-left: 40%;
+    width: 400px;*/
 }
 
 #log {
-    height: 150px;
-    margin-left: 20%;
-    width: 50%;
 }
 
 #totalFeels {
     margin-left: 40%;
     font-weight: bold;
+	display:none;
 }
 
 span {
     font-weight: bold
+}
+
+#lastText {
+	display:none;
 }
