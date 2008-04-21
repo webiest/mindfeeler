@@ -14,7 +14,7 @@ function feels_getTop100() {
 				log('ERROR while parsing feels data');
 				return;
 			}
-			//visualize_click();
+			visualize_click();
 			visualize_keypress();
 		},
 		onFailure: function(transport) {

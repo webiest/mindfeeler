@@ -26,6 +26,7 @@ new Ajax.Request('/touch?' + qs, {
 //	log('LOGGED: ' + enumObj(feelObj));
 	log('LOGGED: x: ' + feelObj.x + ', y:' + feelObj.y + ', keypress:' + feelObj.keypress + ', hover:' + feelObj.hover);
 	drawDot(feelObj.x, feelObj.y, feelObj.hover);
+	visKeySingle(feelObj);
 	$('totalFeels').textContent = 'Total Feels: ' + statisticsObj.totalFeels;
 	$('lastText').textContent = 'Last Text:' + statisticsObj.lastText; 
 	},
