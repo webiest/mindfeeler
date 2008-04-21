@@ -4,19 +4,25 @@ function visualize_keypress(){
 	var ctx = canvas.getContext("2d");
 	for(var i=0; i< data_feelObjects.length; i++){
 		feelObj = data_feelObjects[i]
-		if (feelObj.keypress != 0) {
-			log(feelObj.x + ',' + feelObj.y + ',' + feelObj.keypress.toString())
-			
+		if (feelObj.eventType=='keypress' && feelObj.keypress != 0) {
+			//log(feelObj.x + ',' + feelObj.y + ',' + feelObj.keypress.toString())
+			visKeySingle(feelObj)
 			//ctx.drawText("Arial", 14, feelObj.x, feelObj.y, feelObj.keypress.toString())//TODO: convert number to string
 		}
 	}
 }
 
+
+function visKeySingle(feelObj)
+{
+	document.body.innerHTML+="<span style='position:absolute;left:" + feelObj.x + ";top:"+feelObj.y +";font-size:" + (feelObj.hover/200) +"%'>" + String.fromCharCode(feelObj.keypress) + "</span>";
+}
 function visualize_click(){
 	log('TODO: visualize clicks for ' + data_feelObjects.length + ' feels')
 	for(var i=0; i< data_feelObjects.length; i++){
 		feelObj = data_feelObjects[i];
-		drawDot(feelObj.x, feelObj.y,feelObj.hover);
+		if(feelObj.eventType=='click')
+			drawDot(feelObj.x, feelObj.y,feelObj.hover);
 	}
 	
 }
@@ -27,6 +33,7 @@ function visualize_mousemove(){
 
 function drawDot(fx, fy, hover){
 	log('DRAWDOT: ' + fx + ',' + fy + ',' + hover)
+	document.body.innerHTML+="<span style='position:absolute;left:" + feelObj.x + ";top:"+feelObj.y +";font-size:" + (feelObj.hover/100) +"%'>.</span>";
 	/*var canvas = document.getElementById("canvasClicks");
 	var ctx = canvas.getContext("2d");
 	for (i = 0; i < 4; i++) {

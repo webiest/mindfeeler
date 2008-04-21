@@ -16,7 +16,7 @@
 	margin-left:40%;
 	font-weight: bold;
 }
-
+/*
 #canvasClicks
 {
 	position:absolute;
@@ -25,3 +25,5 @@
 	width: 100%;
 	height:100%;
 }
+*/
+span { font-weight:bold }
