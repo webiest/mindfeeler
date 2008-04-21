@@ -5,7 +5,6 @@ import datetime
 import wsgiref.handlers
 import os
 import datetime
-#import simplejson
 
 from google.appengine.ext.webapp import template
 from google.appengine.ext import db
@@ -49,7 +48,8 @@ class Feel(db.Model):
     keypress = db.IntegerProperty()
     hover = db.IntegerProperty()
     item = db.IntegerProperty()
-    body = db.StringProperty(multiline=True)
+    body = db.StringProperty(multiline=True) 
+    #body is for ads, hover things, its html of items that get thrown to the user
   
 class MainHandler(webapp.RequestHandler):
   def get(self):
@@ -69,56 +69,35 @@ class MainHandler(webapp.RequestHandler):
 class TouchHandler(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
-    feel = Feel()
-     
-    if self.request.get('eventType') is not None:
-        feel.eventType = self.request.get('eventType')
-    if self.request.get('x') is not None:
-        feel.x = int(self.request.get('x'))
-    if self.request.get('y') is not None:
-        feel.y = int(self.request.get('y'))
-    if self.request.get('hover') is not None:
-        feel.hover = int(self.request.get('hover'))    
-    
-    if user:
-        feel.username = user.nickname()
-     
-          
-    feel.ip = self.request.remote_addr
-    
-    if self.request.get('keypress') is not None:
-        feel.keypress = int(self.request.get('keypress'))
-    feel.put()
     lastText="";
+    
+    feel = Feel()
+    feel.eventType = self.request.get('eventType')
+    feel.x = int(self.request.get('x'))
+    feel.y = int(self.request.get('y'))
+    feel.hover = int(self.request.get('hover'))    
+    feel.username = user.nickname()
+    feel.ip = self.request.remote_addr
+    feel.keypress = int(self.request.get('keypress'))
+    feel.put()
+    
     feelQuery = db.Query(Feel)
     totalFeels = feelQuery.count()
+    allfeelObjects = feelQuery.fetch(100) #.order("-date").fetch(100)
     feelObjects = feelQuery.filter("keypress >", 0).fetch(100) #.order("-date").fetch(100)
     for feelObj in feelObjects:
         lastText += chr(int(feelObj.keypress))
+    
     json = Json()
-    self.response.out.write('[' + json.serializeFeel(feel) + ',{"totalFeels":' + str(totalFeels) + ',"lastText":"' + lastText + '"}]')    
+    self.response.out.write('[' + json.serializeFeels(allfeelObjects) + ',{"totalFeels":' + str(totalFeels) + ',"lastText":"' + lastText + '"}]')    
 
 
 class DataHandler(webapp.RequestHandler):
   def get(self):
-      #if(self.request.get('query') == 'feelsTop100'):
       feelsQuery = db.Query(Feel)
       feelObjects = feelsQuery.order("-date").fetch(20)
       json = Json()
       feelObjectsJSON = json.serializeFeels(feelObjects)
-#      feelObjectsJSON = "[\n";
-#      for feelObj in feelObjects:
-#          feelObjectsJSON +=('\t{"x":' + str(feelObj.x) + 
-#                            ',"y":' + str(feelObj.y) + 
-#                            ',"ip":"' + str(feelObj.ip) + '"' +
-#                            ',"hover":' + str(feelObj.hover) +                            
-#                            ',"eventType":"' + str(feelObj.eventType) + '"' +
-#                            ',"keypress":'+ str(feelObj.keypress)
-#                            +'},\n')
-#      l=len(feelObjectsJSON)
-#      feelObjectsJSON =  feelObjectsJSON[0:l-2]+ '\n]'
-    
-      #feelObjectsJSON = simplejson.dumps(feelsQuery.fetch(100))  
       self.response.out.write(feelObjectsJSON)
     
 def main():
