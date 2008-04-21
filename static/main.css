@@ -1,0 +1,27 @@
+#greeting
+{
+	margin-left:40%;
+	width:400px;
+}
+
+#log
+{
+	height:150px;
+	margin-left:20%;
+	width:50%;
+}
+
+#totalFeels
+{
+	margin-left:40%;
+	font-weight: bold;
+}
+
+#canvasClicks
+{
+	position:absolute;
+	top:0;
+	left:0;
+	width: 100%;
+	height:100%;
+}
