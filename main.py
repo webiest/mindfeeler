@@ -25,8 +25,13 @@ class Json:
             feel.eventType = ""
         if feel.keypress is None:
             feel.keypress = 0
-            
-        return ('{"x":' + str(feel.x) + ',"y":' + str(feel.y) + ',"ip":"' + feel.ip + '"' + ',"hover":' + str(feel.hover) + ',"eventType":"' + feel.eventType + '"' + ',"keypress":' + str(feel.keypress) + '}')
+        if feel.username is None:
+            feel.username = ""
+        if feel.date is None:
+            feel.dateStr = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')    
+        else: feel.dateStr = feel.date.strftime('%Y-%m-%d %H:%M:%S')
+        
+        return ('{"x":' + str(feel.x) + ',"y":' + str(feel.y) + ',"ip":"' + feel.ip + '"' + ',"hover":' + str(feel.hover) + ',"eventType":"' + feel.eventType + '"' + ',"keypress":' + str(feel.keypress) + ',"username":"' + feel.username + '","date":"'+ feel.dateStr + '"}')
     
     def serializeFeels(self,feelObjects):
         json = Json()
@@ -89,13 +94,14 @@ class TouchHandler(webapp.RequestHandler):
         lastText += chr(int(feelObj.keypress))
     
     json = Json()
-    self.response.out.write('[' + json.serializeFeels(allfeelObjects) + ',{"totalFeels":' + str(totalFeels) + ',"lastText":"' + lastText + '"}]')    
+    self.response.out.write('[' + json.serializeFeel(feel) + ',{"totalFeels":' + str(totalFeels) + ',"lastText":"' + lastText + '"}]')
+    #self.response.out.write('[' + json.serializeFeels(allfeelObjects) + ',{"totalFeels":' + str(totalFeels) + ',"lastText":"' + lastText + '"}]')    
 
 
 class DataHandler(webapp.RequestHandler):
   def get(self):
       feelsQuery = db.Query(Feel)
-      feelObjects = feelsQuery.order("-date").fetch(20)
+      feelObjects = feelsQuery.order("-date").fetch(100)
       json = Json()
       feelObjectsJSON = json.serializeFeels(feelObjects)
       self.response.out.write(feelObjectsJSON)
