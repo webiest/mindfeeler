@@ -14,14 +14,18 @@ function addFeel(e, eventType){
 
     var x = globalX | e.clientX | 0;
     var y = globalY | e.clientY | 0;
-    var keycode = e.charCode | 0;
+    var keypress = e.charCode | 0;
     var hover = globalHover | 0;
     var qs = 	'eventType=' + eventType +
     			'&x=' + x +
     			'&y=' + y +
-    			'&keypress=' + keycode +
+    			'&keypress=' + keypress +
     			'&hover=' + hover;
 
+	var localFeelObj = {'x':x,'y':y,'hover':hover,'keypress':keypress,'username':globalNickname};
+    drawDot(localFeelObj);
+    visKeySingle(localFeelObj);
+	
 	new Ajax.Request('/touch?' + qs, {
         method: 'get', 
         onSuccess: function(transport){
@@ -32,8 +36,7 @@ function addFeel(e, eventType){
             
 			log('LOGGED: x: ' + feelObj.x + ', y:' + feelObj.y + ', keypress:' +
             feelObj.keypress + ', hover:' + feelObj.hover);  
-            drawDot(feelObj);
-            visKeySingle(feelObj);
+
             $('totalFeels').textContent = 'Total Feels: ' + statisticsObj.totalFeels;
             $('lastText').textContent = 'Last Text:' + statisticsObj.lastText;
         },
@@ -88,7 +91,7 @@ function feels_getTop100(){
 }
 
 function visualize_click(){
-    log('TODO: visualize clicks for ' + data_feelObjects.length + ' feels')
+    log('Visualizing clicks for ' + data_feelObjects.length + ' feels...')
     for (var i = 0; i < data_feelObjects.length; i++) {
         feelObj = data_feelObjects[i];
         if (feelObj.eventType == 'click') 
@@ -97,7 +100,7 @@ function visualize_click(){
 }
 
 function visualize_keypress(){
-    log('TODO: visualize keypress for ' + data_feelObjects.length + ' feels')
+    log('Visualizing keypresses for ' + data_feelObjects.length + ' feels...')
     for (var i = 0; i < data_feelObjects.length; i++) {
         feelObj = data_feelObjects[i]
         if (feelObj.eventType == 'keypress' && feelObj.keypress != 0) {
