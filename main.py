@@ -65,7 +65,15 @@ class Feel(db.Model):
     body = db.StringProperty(multiline=True) 
     #body is for ads, hover things, its html of items that get thrown to the user
     
-  
+class Stroke(db.Model):
+    room  = db.StringProperty()
+    user1 = db.StringProperty()
+    user2 = db.StringProperty()
+    user3 = db.StringProperty()
+    user4 = db.StringProperty()
+    user5 = db.StringProperty()
+    #keeping it at 5 users for now, easy enough to expand    
+    
 class MainHandler(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
@@ -110,12 +118,23 @@ class DataHandler(webapp.RequestHandler):
       feelsQuery = db.Query(Feel)
       feelObjects = feelsQuery.order("-date").fetch(100)
       self.response.out.write(Json().serializeQuery(feelObjects))
+
+class StrokeHandler(webapp.RequestHandler):
+  def get(self):
+    strokes = db.GqlQuery("SELECT * FROM Stroke WHERE room = :1", "default").get()
+    if strokes:
+      strokes.user1 = self.request.get('x')+"x"+self.request.get('y')
+    else:
+      strokes = Stroke(room="default", user1="200x399")
+    db.put(strokes)
+    self.response.out.write(str(strokes.user1)+":"+str(strokes.user2))
     
 def main():
   application = webapp.WSGIApplication([
     ('/', MainHandler),
     ('/touch', TouchHandler),
-    ('/data',DataHandler)
+    ('/data',DataHandler),
+    ('/stroke',StrokeHandler)
   ], debug=True)
   
   wsgiref.handlers.CGIHandler().run(application)
