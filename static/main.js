@@ -116,7 +116,12 @@ function visualize_mousemove(x,y){
         onSuccess: function(transport){
             try {
                 //data_feelObjects = eval(transport.responseText);
-                log('LOADED xes and ys [' + transport.responseText + ']')
+                
+                positions = transport.responseText.split(":");
+                position1 = positions[0].split("x");
+                $(globalNickname+'_icon').style.top = position1[1];
+                $(globalNickname+'_icon').style.left = position1[0];
+                $('xy4all').textContent = transport.responseText+position1[0]+globalNickname+'_icon';
             } 
             catch (e) {
                 log('ERROR while parsing sroke data'+e);
