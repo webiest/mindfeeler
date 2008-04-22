@@ -6,42 +6,51 @@ import wsgiref.handlers
 import os
 import datetime
 
+from django.utils import simplejson
 from google.appengine.ext.webapp import template
 from google.appengine.ext import db
 from google.appengine.api import users
 from google.appengine.ext import webapp
 
 class Json:  
-    def serializeFeel(self,feel):
-        if feel.x is None:
-            feel.x = 0
-        if feel.y is None:
-            feel.y = 0
-        if feel.ip is None:
-            feel.ip = ""
-        if feel.hover is None:
-            feel.hover = 0
-        if feel.eventType is None:
-            feel.eventType = ""
-        if feel.keypress is None:
-            feel.keypress = 0
-        if feel.username is None:
-            feel.username = ""
-        if feel.date is None:
-            feel.dateStr = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')    
-        else: feel.dateStr = feel.date.strftime('%Y-%m-%d %H:%M:%S')
-        
-        return ('{"x":' + str(feel.x) + ',"y":' + str(feel.y) + ',"ip":"' + feel.ip + '"' + ',"hover":' + str(feel.hover) + ',"eventType":"' + feel.eventType + '"' + ',"keypress":' + str(feel.keypress) + ',"username":"' + feel.username + '","date":"'+ feel.dateStr + '"}')
+    def serializeRow(self,r):
+        import datetime
+        a = {}
+        for k in r.fields().keys():
+            v = getattr(r, k)
+            a['id'] = r.key().id()
+            if v is None:
+                    a[k] = ""
+            elif isinstance(v, str):
+                if(v is None):
+                    a[k] = ""
+                else:
+                    a[k] = str(v)
+            elif isinstance(v, unicode):
+                if(v is None):
+                    a[k] = ""
+                else:
+                    a[k] = unicode(v)
+            elif isinstance(v, datetime.datetime):
+                a[k] = v.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(v, datetime.date):
+                a[k] = v.strftime('%Y-%m-%d')
+            elif isinstance(v, datetime.time):
+                a[k] = v.strftime('%H:%M:%S')
+            elif isinstance(v, (int, float, list)):
+                a[k] = v
+            else:
+                a[k] = str(v)
+        return simplejson.dumps(a)
     
-    def serializeFeels(self,feelObjects):
-        json = Json()
-        feelObjectsJSON = "[\n";
-        for feelObj in feelObjects:
-            feelObjectsJSON += '\t' + json.serializeFeel(feelObj) + ',\n'
-        l=len(feelObjectsJSON)
-        feelObjectsJSON =  feelObjectsJSON[0:l-2]+ '\n]'
-        return feelObjectsJSON
-
+    def serializeQuery(self,query):
+        ObjectsJSON = "";
+        for rowObj in query:
+            ObjectsJSON += self.serializeRow(rowObj) + ','
+        l=len(ObjectsJSON)
+        ObjectsJSON =  "[" + ObjectsJSON[0:l-1] + ']'
+        return ObjectsJSON
+    
 class Feel(db.Model):
     date = db.DateTimeProperty()
     eventType = db.StringProperty()
@@ -55,6 +64,7 @@ class Feel(db.Model):
     item = db.IntegerProperty()
     body = db.StringProperty(multiline=True) 
     #body is for ads, hover things, its html of items that get thrown to the user
+    
   
 class MainHandler(webapp.RequestHandler):
   def get(self):
@@ -92,19 +102,14 @@ class TouchHandler(webapp.RequestHandler):
     feelObjects = feelQuery.filter("keypress >", 0).fetch(100) #.order("-date").fetch(100)
     for feelObj in feelObjects:
         lastText += chr(int(feelObj.keypress))
-    
-    json = Json()
-    self.response.out.write('[' + json.serializeFeel(feel) + ',{"totalFeels":' + str(totalFeels) + ',"lastText":"' + lastText + '"}]')
-    #self.response.out.write('[' + json.serializeFeels(allfeelObjects) + ',{"totalFeels":' + str(totalFeels) + ',"lastText":"' + lastText + '"}]')    
-
+    self.response.out.write('[' + Json().serializeRow(feel) + ',{"totalFeels":' + str(totalFeels) + ',"lastText":"' + lastText + '"}]')
+ 
 
 class DataHandler(webapp.RequestHandler):
   def get(self):
       feelsQuery = db.Query(Feel)
       feelObjects = feelsQuery.order("-date").fetch(100)
-      json = Json()
-      feelObjectsJSON = json.serializeFeels(feelObjects)
-      self.response.out.write(feelObjectsJSON)
+      self.response.out.write(Json().dumpquery(feelObjects))
     
 def main():
   application = webapp.WSGIApplication([
@@ -118,32 +123,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-
-
-def dumprow(r):
-    import datetime
-    a = {}
-    for k in r.fields().keys():
-        v = getattr(r, k)
-        a['id'] = r.key().id()
-        if isinstance(v, str):
-            a[k] = str(v)
-        elif isinstance(v, unicode):
-            a[k] = unicode(v)
-        elif isinstance(v, datetime.datetime):
-            a[k] = v.strftime('%Y-%m-%d %H:%M:%S')
-        elif isinstance(v, datetime.date):
-            a[k] = v.strftime('%Y-%m-%d')
-        elif isinstance(v, datetime.time):
-            a[k] = v.strftime('%H:%M:%S')
-        elif isinstance(v, (int, float, list)):
-            a[k] = v
-        else:
-            a[k] = str(v)
-    return a
-
-def dumpquery(query):
-    s = []
-    for r in query:
-        s.append(dumprow(r))
-    return s 
