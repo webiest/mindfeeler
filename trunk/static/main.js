@@ -51,6 +51,7 @@ function mouse_move(e){
         globalHover = timeNow - lastHover;
     else 
         lastHover = timeNow;
+    visualize_mousemove(globalX,globalY)
     //addFeel(e,'mousemove'); //we could make this 1/2 as heavy by removing the return data
 }
 
@@ -105,9 +106,26 @@ function visualize_keypress(){
     }
 }
 
-function visualize_mousemove(){
-}
+function visualize_mousemove(x,y){
 
+    new Ajax.Request('/stroke?x='+x+'&y='+y, {
+        method: 'get',
+        onSuccess: function(transport){
+            try {
+                //data_feelObjects = eval(transport.responseText);
+                log('LOADED xes and ys [' + transport.responseText + ']')
+            } 
+            catch (e) {
+                log('ERROR while parsing sroke data'+e);
+                return;
+            }
+        },
+        onFailure: function(transport){
+            log('ERROR in visualize_mousemove [' + transport.status + ']:' + transport.statusText);
+        }
+    });
+}
+    
 function visKeySingle(feelObj){
     var nickOrIP  = feelObj.username;
     if (nickOrIP.length == 0) 
