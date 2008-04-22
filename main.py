@@ -109,7 +109,7 @@ class DataHandler(webapp.RequestHandler):
   def get(self):
       feelsQuery = db.Query(Feel)
       feelObjects = feelsQuery.order("-date").fetch(100)
-      self.response.out.write(Json().dumpquery(feelObjects))
+      self.response.out.write(Json().serializeQuery(feelObjects))
     
 def main():
   application = webapp.WSGIApplication([
