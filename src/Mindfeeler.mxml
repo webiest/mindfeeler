@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application creationComplete="cc()" xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" xmlns:mccune="com.dougmccune.controls.*" backgroundColor="#FFFFFF" width="100%" height="100%" usePreloader="false">
+<mx:Script>
+	<![CDATA[
+
+		private function cc():void	{
+                    
+                    ExternalInterface.addCallback("setupSlider", setupSlider);
+                    ExternalInterface.call("init_flashLoaded");
+  		}
+  		
+  		private var global_minID:Number = 0, global_maxID:Number = 0;
+		private function setupSlider(minDate:Number,minID:Number, maxDate:Number, maxID:Number):void {
+            var minDateD:Date = new Date();
+            minDateD.setTime(minDate);
+            feelSliderSelector.minimum = minID;
+            feelSliderSelector.maximum = maxID;
+            
+            global_minID = minID;
+            global_maxID = maxID;
+            lblLeft.text = 'Oldest:' + minDateD.toDateString();
+			
+			feelSliderSelector.values = [minID, maxID];
+            //lblRight.text = maxDate;
+        }
+        
+        private function feelSliderSelector_change():void
+        {
+        	 ExternalInterface.call("loadNewDateFromRange", feelSliderSelector.values[0], feelSliderSelector.values[1]);
+        }
+	]]>
+</mx:Script>
+                    <mx:HBox verticalAlign="middle" width="100%" height="100%" x="0" y="0" paddingRight="20" paddingLeft="20">
+                        <mx:Label id="lblLeft" fontWeight="bold" fontSize="12"/>
+
+            
+                        <mccune:HSlider id="feelSliderSelector"  
+                            trackHighlightSkin="com.dougmccune.skins.SliderThumbHighlightSkin"
+                            allowTrackClick="true" allowThumbOverlap="true" 
+                            liveDragging="true" 
+                            showDataTip="true"  dataTipPlacement="bottom"   dataTipOffset="3"
+                            showTrackHighlight="true"
+                            thumbCount="2"  width="100%" 
+                            values="[5000, 9000]"
+                            minimum="-9000" maximum="9000" snapInterval="1"
+                         	height="100%"
+                         	change="feelSliderSelector_change()"
+                         />
+                        <mx:Label id="lblRight" text="Now" fontWeight="bold" fontSize="12"/>
+                    </mx:HBox>
+
+</mx:Application>
