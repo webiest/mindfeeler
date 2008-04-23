@@ -11,6 +11,7 @@ body {
 #greeting {
     /*margin-left: 40%;
     width: 400px;*/
+    font-weight: bold;	
 	display:none;
 }
 

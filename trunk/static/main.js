@@ -7,16 +7,22 @@ var lastHover = 0;
 function init(e){
 	visualize_clicks();
 	visualize_keypresses();
-	document.body.style.cursor = "crosshair";
-	$('waitText').innerHTML = ('Ready to <span class="wow">interact!</span>');
+	document.body.style.cursor = 'crosshair';
+	$('nickname').innerHTML = globalNickname;
+	$('nickname').style.color = str2hex(globalNickname);
+	$('waitText').innerHTML = 'Ready to <span class="wow">interact!</span>';
 	setTimeout(function(){$('waitText').style.display='none';$('greeting').style.display='block';}, 2000);
 }
 
 var lastFeltDate;
 function addFeel(e, eventType){
-
-    var x = globalX | e.clientX | 0;
-    var y = globalY | e.clientY | 0;
+    var x = globalX -10| e.clientX -10| 0;
+    var y = globalY -10| e.clientY -10| 0;
+	
+	if(x > 0)
+		x+=8;
+//	if(y > 0)
+		y-=2;
     var keypress = e.charCode | 0;
     var hover = globalHover | 0;
     var qs = 	'eventType=' + eventType +

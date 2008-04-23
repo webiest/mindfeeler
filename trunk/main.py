@@ -41,7 +41,7 @@ class Json:
                 a[k] = v
             else:
                 a[k] = str(v)
-        return simplejson.dumps(a).replace(' ','')
+        return simplejson.dumps(a).replace('\": ','\":')
     
     def serializeQuery(self,query):
         ObjectsJSON = "";
@@ -88,19 +88,15 @@ class MainHandler(webapp.RequestHandler):
     template_values = {
       'nickname': nickname,
       'totalFeels': fq.filter('eventType =','click').count(1000)+fq.filter('eventType =','keypress').count(1000),
-      #'totalFeels':  db.Query(Feel).filter('eventType =', value) count(10000),
     }
     path = os.path.join(os.path.dirname(__file__), 'index.html')
-#            l=len(ObjectsJSON)
-#        ObjectsJSON =  "[" + ObjectsJSON[0:l-1] + ']'
-
     mainRenderedHTML = template.render(path, template_values)
     mainRenderedHTML = mainRenderedHTML[0:len(mainRenderedHTML)-15]
-    
     self.response.out.write(mainRenderedHTML) #flush main HTML
-#    'data_feelObjects': 
+    
     dataJS = '<script>var data_feelObjects = eval(\'' + Json().serializeQuery(DataHandler().getTop100()) + '\');</script>'
     self.response.out.write(dataJS + '</body></html>')
+    
 class TouchHandler(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
