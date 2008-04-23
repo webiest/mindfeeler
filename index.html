@@ -2,13 +2,17 @@
 	<head>
 		<title>Mindfeeler - {{ totalFeels }} Feels</title>
 		<link rel="stylesheet" type="text/css" href="static/main.css"/>
+		<script src="static/date.js"></script>
 		<script language="JavaScript">
 		var gloalFeelCount = parseInt('{{ totalFeels }}');
 		var globalNickname = '{{ nickname }}';
+		var globalOldestFeel = Date.parse('{{ oldestFeel }}');
+		var globalNewestFeel = Date.parse('{{ newestFeel }}');
 		</script>
-		<script src="static/date.js"></script>
+
 		<script src="static/prototype-1.6.0.2.js"></script>
 		<script src="static/main.js"></script>
+		<script src="static/flash.js"></script>
 	</head>
 	<body 
 		onload="init(event)" 
@@ -23,5 +27,20 @@
 		<!-- <div id="lastText">Last text:</div> -->
         <!-- <span id="xy4all"></span><br/>-->
         <img src="static/default_icon.gif" id='{{ nickname }}_icon' style="position:absolute;"/>
-	</body>
-</html>
+		<object class="MindfeelerFlash" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
+			id="MindfeelerFlashO" width="100%" height="50"
+			codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
+			<param name="movie" value="static/Mindfeeler.swf" />
+			<param name="quality" value="high" />
+			<param name="bgcolor" value="#ffffff" />
+			<param name="allowScriptAccess" value="sameDomain" />
+			<embed id="MindfeelerFlash" class="MindfeelerFlash" src="static/Mindfeeler.swf" quality="high" bgcolor="#ffffff"
+				width="100%" height="50" name="MindfeelerFlash" align="middle"
+				play="true"
+				loop="false"
+				quality="high"
+				allowScriptAccess="sameDomain"
+				type="application/x-shockwave-flash"
+				pluginspage="http://www.adobe.com/go/getflashplayer">
+			</embed>
+	</object>
