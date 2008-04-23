@@ -1,10 +1,12 @@
 <html>
 	<head>
-		<title>Mindfeeler</title>
+		<title>Mindfeeler - {{ totalFeels }} Feels</title>
+		<link rel="stylesheet" type="text/css" href="static/main.css"/>
 		<script language="JavaScript">
+		var gloalFeelCount = '{{ totalFeels }}';
 		var globalNickname = '{{ nickname }}';
 		</script>
-		<link rel="stylesheet" type="text/css" href="static/main.css"/>
+		<script src="static/date.js"></script>
 		<script src="static/prototype-1.6.0.2.js"></script>
 		<script src="static/main.js"></script>
 	</head>
@@ -14,12 +16,15 @@
 		onkeypress="addFeel(event,'keypress');" 
 		onmousemove="mouse_move(event)"
 		>
-		
-		<div id="greeting">Yo <strong>{{ nickname }}</strong>! - <b>click</b> or <code>type</code> <i>anywhere</i> to join the fun!</div>
+		<div id="waitText">Wait for it (<b>TOTALLY</b> worth it)...</div>
+		<div id="greeting"><span class="wow">Welcome {{ nickname }}!</span><br/>Just <b>click</b> or <code>type</code> <i>anywhere</i> to join the fun!</div>
 		<span id="log"></span><br/>
-		<div id="totalFeels">Total Feels:</div><br/>
-		<div id="lastText">Last text:</div>
+		<div id="totalFeels">Total Feels:{{ totalFeels }}</div><br/>
+		<!-- <div id="lastText">Last text:</div> -->
         <span id="xy4all"></span><br/>
         <img src="static/default_icon.gif" id='{{ nickname }}_icon' style="position:absolute;">
+		<script>
+			var data_feelObjects = eval('{{ data_feelObjects }}');
+		</script>
 	</body>
 </html>
