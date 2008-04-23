@@ -12,9 +12,64 @@ function init(e){
 	$('nickname').style.color = str2hex(globalNickname);
 	$('waitText').innerHTML = 'Ready to <span class="wow">interact!</span>';
 	setTimeout(function(){$('waitText').style.display='none';$('greeting').style.display='block';}, 2000);
+	
+	
+}
+
+var dateRangeArray;
+function init_flashLoaded() //called by flash when the flash object is done loading
+{
+	var maxDate = globalNewestFeel.getTime();
+	var minDate = globalOldestFeel.getTime();
+
+	dateRangeArray = new Array();
+	dateRangeArray.push({date:globalOldestFeel.getTime()});
+
+	var tempDate = globalOldestFeel;
+	while(tempDate < globalNewestFeel)
+	{
+		tempDate = tempDate.addDays(1);
+		dateRangeArray.push({date:tempDate.getTime()});
+	}
+	minID = 0;
+	maxID = dateRangeArray.length-1;
+
+	$('MindfeelerFlash').setupSlider(minDate, minID, maxDate, maxID);
 }
 
 var lastFeltDate;
+var tempPKCounter = 0;
+
+
+function loadNewDateFromRange(lowerBound, upperBound)
+{
+	var lowerBoundFriendly = new Date(dateRangeArray[lowerBound].date).toString('yyyy-MM-dd');
+	var upperBoundFriendly = new Date(dateRangeArray[upperBound].date).toString('yyyy-MM-dd');
+	log('Loading range: ' + lowerBoundFriendly + ' - ' + upperBoundFriendly + '...');
+
+    var qs = 'from='+escape(lowerBoundFriendly) + '&to=' + escape(upperBoundFriendly);
+    
+    new Ajax.Request('/data?' + qs, {
+        method: 'get',
+        onSuccess: function(transport){
+            try {
+                data_feelObjects = eval(transport.responseText);
+				//gloalFeelCount = data_feelObjects.length;
+				updateDisplay();
+                log('LOADED feels objects [' + data_feelObjects.length + ']')
+            } 
+            catch (e) {
+                log('ERROR while parsing feels data');
+                return;
+            }
+           visualize_clicks();
+           visualize_keypresses();
+        },
+        onFailure: function(transport){
+            log('ERROR in feels_getTop100 [' + transport.status + ']:' + transport.statusText);
+        }
+    });
+}
 function addFeel(e, eventType){
     var x = globalX -10| e.clientX -10| 0;
     var y = globalY -10| e.clientY -10| 0;
@@ -25,14 +80,23 @@ function addFeel(e, eventType){
 		y-=2;
     var keypress = e.charCode | 0;
     var hover = globalHover | 0;
-    var qs = 	'eventType=' + eventType +
+	
+	tempPKCounter++;
+    var tempKey = tempPKCounter;
+	
+	
+	//TODO: combine or reuse qs and localFeelObj. We can make one from the other.
+	var qs = 	'eventType=' + eventType +
     			'&x=' + x +
     			'&y=' + y +
     			'&keypress=' + keypress +
-    			'&hover=' + hover;
-
-	var localFeelObj = {'x':x,'y':y,'hover':hover,'keypress':keypress,'username':globalNickname,'date':new Date().toLocaleString()};
-    if (eventType == 'click') 
+    			'&hover=' + hover +
+				'&tempKey=' + tempKey;
+				
+	var localFeelObj = {'x':x,'y':y,'hover':hover,'keypress':keypress,'username':globalNickname,'date':new Date().toLocaleString(),'tempKey':tempKey};
+    
+	
+	if (eventType == 'click') 
 		visualize_click_single(localFeelObj);
 	else if (eventType = 'keypress') {
 		if(String.fromCharCode(keypress).length == 0) //don't add the shift key and other non printables
@@ -42,51 +106,64 @@ function addFeel(e, eventType){
 		}
 	
 	
-	var feelAction = function(){
-		new Ajax.Request('/touch?' + qs, {
-			method: 'get',
-			onSuccess: function(transport){
-			
-				var responseObj = eval(transport.responseText);
-				var feelObj = responseObj[0];
-				var statisticsObj = responseObj[1];
-				
-				//log('LOGGED:' + Object.toJSON(feelObj));
-				
-				gloalFeelCount = statisticsObj.totalFeels;
-				updateDisplay();
-			/* $('lastText').textContent = 'Last Text:' + statisticsObj.lastText;*/
-			},
-			onFailure: function(transport){
-				log('ERROR [' + transport.status + ']:' + transport.statusText);
-			}
-		});
-	}
 	
 	if (lastFeltDate != null) {
 		//If they have felt already less than a second ago, delay this new feel request for 1 second more
 		var msSinceLastFeel = (new Date().getTime()) - lastFeltDate.getTime();
 		//log('msSinceLastFeel:' + msSinceLastFeel);
 		if (msSinceLastFeel < 2000) {
-			var waitafew = (5000*Math.random())+(1500*Math.random());
-			//log('waitafew:' + waitafew);
-			setTimeout(feelAction, waitafew);
+			var waitafew = (5000 * Math.random()) + (1500 * Math.random());
+			data_feelObjects.push(localFeelObj);
+			setTimeout(function(){addFeel_ajax(qs);}, waitafew);
 		}
-		else //otherwise, go ahead and call it now.
-		{
-			lastFeltDate = new Date();
+		else {		//otherwise, go ahead and call it now.
+			data_feelObjects.push(localFeelObj);
+			lastFeltDate = new Date();//TODO: refactor to reduce duplication of code
 			gloalFeelCount++;
 			updateDisplay();
-			feelAction.call(this);
+			addFeel_ajax.call(this, [qs]);
 		}
 	}
 	else {
+		data_feelObjects.push(localFeelObj);
 		lastFeltDate = new Date();
 		gloalFeelCount++;
 		updateDisplay();
-		feelAction.call(this);
+		addFeel_ajax.call(this,[qs]);
 	}
 }
+
+
+
+
+
+function addFeel_ajax(qs){
+	
+	new Ajax.Request('/touch?' + qs, {
+		method: 'get',
+		onSuccess: function(transport){
+			var responseObj = transport.responseText.split(','); 
+			gloalFeelCount = parseInt(responseObj[0]);
+			
+			var feelTempKey = responseObj[1];
+			var feelPermID = responseObj[2];
+			
+			updateTempKeyToPermID(feelTempKey,feelPermID);
+			updateDisplay();
+			/* $('lastText').textContent = 'Last Text:' + statisticsObj.lastText;*/
+		},
+		onFailure: function(transport){
+			log('ERROR [' + transport.status + ']:' + transport.statusText);
+		}
+	});
+}
+
+function updateTempKeyToPermID(feelTempKey,feelPermID)
+{
+	var feelTag = document.getElementsByName('feelTEMP_'+feelTempKey)[0];
+	feelTag.setAttribute('name', 'feel'+feelPermID);
+}
+
 
 function mouse_move(e){
     globalX = e.clientX;
@@ -165,11 +242,11 @@ function visualize_mousemove_single(x, y){
 			//setTimeout(touchAction, 1000);
 		else { //otherwise, go ahead and call it now.
 			lastTouchedDate = new Date();
-			touchAction.call(this);
+			setTimeout(touchAction, 100); //give icon time to move.
 		}
 	}
 	else {
-		touchAction.call(this);
+		setTimeout(touchAction, 100); //give icon time to move.
 		lastTouchedDate = new Date();
 	}
 }		
@@ -185,6 +262,8 @@ function addStroke(x,y){
         }
     });
 }
+
+
 function visualize_keypress_single(feelObj){
     var nickOrIP  = feelObj.username.length > 0 ? feelObj.username : feelObj.ip;
 		
@@ -197,7 +276,12 @@ function visualize_keypress_single(feelObj){
 	var opacityPCT = getOpacity(feelObj);
 	var opacityDEC = opacityPCT / 100;
 	
-	var newTag = "<span title='keypress by " + nickOrIP +"' style='position:absolute;left:" +
+	var tempORpermKey = feelObj.id;
+	
+	if(tempORpermKey == null || tempORpermKey.length ==0)
+		tempORpermKey = 'TEMP_' + feelObj.tempKey;
+
+	var newTag = "<span name='feel" + tempORpermKey + "' title='keypress by " + nickOrIP +"' style='position:absolute;left:" +
     feelObj.x +
     ";top:" +
     feelObj.y +
@@ -226,8 +310,13 @@ function visualize_click_single(feelObj){
 	
 	var opacityPCT = getOpacity(feelObj);
 	var opacityDEC = opacityPCT / 100;
-	var newTag =
-	"<span title='click by " + nickOrIP +"' style='position:absolute;left:" + feelObj.x +
+	
+	var tempORpermKey = feelObj.id;
+	
+	if(tempORpermKey == null || tempORpermKey.length ==0)
+		tempORpermKey = 'TEMP_' + feelObj.tempKey;
+
+	var newTag = "<span name='feel" + tempORpermKey + "' title='click by " + nickOrIP +"' style='position:absolute;left:" + feelObj.x +
     ";top:" + feelObj.y + ";color:#" + str2hex(nickOrIP) +  
 	";font-size:" + fontSize + "%" + 
 	"filter:alpha(opacity=" + opacityPCT +  ");" +
@@ -238,7 +327,7 @@ function visualize_click_single(feelObj){
 var clearLogId = 0;
 function log(s){
     $('log').innerHTML = s;
-	if(clearLogId > 0)
+	if(clearLogId != null)
 		window.clearTimeout(clearLogId);
 	clearLogId = window.setTimeout(function(){ $('log').innerHTML = ''; }, 3000);
 }

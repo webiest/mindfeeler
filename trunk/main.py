@@ -6,6 +6,7 @@ import wsgiref.handlers
 import os
 import datetime
 
+
 from django.utils import simplejson
 from google.appengine.ext.webapp import template
 from google.appengine.ext import db
@@ -41,7 +42,7 @@ class Json:
                 a[k] = v
             else:
                 a[k] = str(v)
-        return simplejson.dumps(a).replace('\": ','\":')
+        return simplejson.dumps(a).replace('\": ','\":').replace('", "','","')
     
     def serializeQuery(self,query):
         ObjectsJSON = "";
@@ -84,14 +85,15 @@ class MainHandler(webapp.RequestHandler):
         self.redirect(users.create_login_url(self.request.uri))
     
     fq = db.Query(Feel)
-
+    feelBounds = DataHandler().getBounds(); 
     template_values = {
       'nickname': nickname,
       'totalFeels': fq.filter('eventType =','click').count(1000)+fq.filter('eventType =','keypress').count(1000),
+      'oldestFeel':feelBounds[0],
+      'newestFeel':feelBounds[1],
     }
     path = os.path.join(os.path.dirname(__file__), 'index.html')
     mainRenderedHTML = template.render(path, template_values)
-    mainRenderedHTML = mainRenderedHTML[0:len(mainRenderedHTML)-15]
     self.response.out.write(mainRenderedHTML) #flush main HTML
     
     dataJS = '<script>var data_feelObjects = eval(\'' + Json().serializeQuery(DataHandler().getTop100()) + '\');</script>'
@@ -109,24 +111,46 @@ class TouchHandler(webapp.RequestHandler):
     feel.username = user.nickname()
     feel.ip = self.request.remote_addr
     feel.keypress = int(self.request.get('keypress'))
+    tempKey = int(self.request.get('tempKey'))
     feel.put()
     
     fq = db.Query(Feel)
     totalFeels = fq.filter('eventType =','click').count(1000)+fq.filter('eventType =','keypress').count(1000)
-
-    self.response.out.write('[' + Json().serializeRow(feel) + ',{"totalFeels":' + str(totalFeels) + '}]')
+    self.response.out.write(str(totalFeels)+','+ str(tempKey) + ',' + str(feel.key().id()))
+    # self.response.out.write('[' + Json().serializeRow(feel) + ',{"totalFeels":' + str(totalFeels) + '}]')
 
 
 class DataHandler(webapp.RequestHandler):
   def get(self):
-      top100json = Json().serializeQuery(self.getTop100())
-      self.response.out.write(top100json)
+      fromDate = None
+      toDate = None
+      if(self.request.get('from') is not None):
+          fromDate = self.request.get('from')
+      if(self.request.get('to') is not None):
+          toDate = self.request.get('from')
+          
+      if(fromDate is not None or toDate is not None):
+          feelsJSON = Json().serializeQuery(self.getFeelsAllSortedByDate(fromDate, toDate))
+      else:
+          feelsJSON = Json().serializeQuery(self.getTop100())
+      self.response.out.write(feelsJSON)
   
   def getTop100(self):
       return db.Query(Feel).order("-date").fetch(100)
 
-  def getFeelsAllSortedByDate(self):
-      return db.Query(Feel).order("-date").fetch(250)
+  def getFeelsAllSortedByDate(self,fromDate,toDate):
+      fq = db.Query(Feel).order("-date")
+      if(fromDate is not None):
+          fq = fq.filter("date >=", datetime.datetime.strptime(fromDate, "%Y-%m-%d"))
+      if(toDate is not None):
+          fq = fq.filter("date <=", datetime.datetime.strptime(toDate, "%Y-%m-%d"))
+      return fq.fetch(700)
+
+  def getBounds(self):
+      fq = db.Query(Feel).order("-date").fetch(1000)
+      newest = fq[0]
+      oldest = fq[len(fq)-1]
+      return [oldest.date.strftime('%Y-%m-%d %H:%M:%S'), newest.date.strftime('%Y-%m-%d %H:%M:%S')];
     
   def getLastText(self):
     lastText = ""
