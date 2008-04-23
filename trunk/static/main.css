@@ -2,13 +2,16 @@ html {
 	cursor:crosshair;
 }
 body {
-	cursor:crosshair;
+	cursor:wait;
 	width:100%;
 	height:100%;
+	overflow:hidden;
 }
+
 #greeting {
     /*margin-left: 40%;
     width: 400px;*/
+	display:none;
 }
 
 #log {
@@ -23,7 +26,17 @@ body {
 span {
     font-weight: bold
 }
-
+/*
 #lastText {
 	display:none;
+}*/
+
+#waitText {
+	font-size: 1.5em;
+	font-family:sans-serif;
+	padding-bottom:20px;
+}
+.wow {
+	font-weight:bold;
+	color:teal;
 }

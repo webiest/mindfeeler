@@ -41,7 +41,7 @@ class Json:
                 a[k] = v
             else:
                 a[k] = str(v)
-        return simplejson.dumps(a)
+        return simplejson.dumps(a).replace(' ','')
     
     def serializeQuery(self,query):
         ObjectsJSON = "";
@@ -85,6 +85,8 @@ class MainHandler(webapp.RequestHandler):
         
     template_values = {
       'nickname': nickname,
+      'totalFeels':  db.Query(Feel).count(10000),
+      'data_feelObjects': Json().serializeQuery(DataHandler().getTop100())
     }
     path = os.path.join(os.path.dirname(__file__), 'index.html')
     self.response.out.write(template.render(path, template_values))
@@ -92,8 +94,7 @@ class MainHandler(webapp.RequestHandler):
 class TouchHandler(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
-    lastText="";
-    
+
     feel = Feel()
     feel.eventType = self.request.get('eventType')
     feel.x = int(self.request.get('x'))
@@ -106,19 +107,26 @@ class TouchHandler(webapp.RequestHandler):
     
     feelQuery = db.Query(Feel)
     totalFeels = feelQuery.count()
+
+    self.response.out.write('[' + Json().serializeRow(feel) + ',{"totalFeels":' + str(totalFeels) + '}]')
+
+
+class DataHandler(webapp.RequestHandler):
+  def get(self):
+      top100json = Json().serializeQuery(self.getTop100())
+      self.response.out.write(top100json)
+  
+  def getTop100(self):
+      return db.Query(Feel).order("-date").fetch(100)
+  
+  def getLastText(self):
+    lastText = ""
     allfeelObjects = feelQuery.fetch(100) #.order("-date").fetch(100)
     feelObjects = feelQuery.filter("keypress >", 0).fetch(100) #.order("-date").fetch(100)
     for feelObj in feelObjects:
         lastText += chr(int(feelObj.keypress))
-    self.response.out.write('[' + Json().serializeRow(feel) + ',{"totalFeels":' + str(totalFeels) + ',"lastText":"' + lastText + '"}]')
- 
-
-class DataHandler(webapp.RequestHandler):
-  def get(self):
-      feelsQuery = db.Query(Feel)
-      feelObjects = feelsQuery.order("-date").fetch(100)
-      self.response.out.write(Json().serializeQuery(feelObjects))
-
+        
+        
 class StrokeHandler(webapp.RequestHandler):
   def get(self):
     strokes = db.GqlQuery("SELECT * FROM Stroke WHERE room = :1", "default").get()
@@ -127,7 +135,8 @@ class StrokeHandler(webapp.RequestHandler):
     else:
       strokes = Stroke(room="default", user1="200x399")
     db.put(strokes)
-    self.response.out.write(str(strokes.user1)+":"+str(strokes.user2))
+    self.response.out.write("")
+#    self.response.out.write(str(strokes.user1)+":"+str(strokes.user2))
     
 def main():
   application = webapp.WSGIApplication([
