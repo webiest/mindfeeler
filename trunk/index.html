@@ -3,7 +3,7 @@
 		<title>Mindfeeler - {{ totalFeels }} Feels</title>
 		<link rel="stylesheet" type="text/css" href="static/main.css"/>
 		<script language="JavaScript">
-		var gloalFeelCount = '{{ totalFeels }}';
+		var gloalFeelCount = parseInt('{{ totalFeels }}');
 		var globalNickname = '{{ nickname }}';
 		</script>
 		<script src="static/date.js"></script>
@@ -23,8 +23,5 @@
 		<!-- <div id="lastText">Last text:</div> -->
         <span id="xy4all"></span><br/>
         <img src="static/default_icon.gif" id='{{ nickname }}_icon' style="position:absolute;">
-		<script>
-			var data_feelObjects = eval('{{ data_feelObjects }}');
-		</script>
 	</body>
 </html>
