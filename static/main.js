@@ -9,7 +9,7 @@ function init(e){
 	visualize_keypresses();
 	document.body.style.cursor = "crosshair";
 	$('waitText').innerHTML = ('Ready to <span class="wow">interact!</span>');
-	setTimeout(function(){$('waitText').style.display='none';$('greeting').style.display='block';}, 5000);
+	setTimeout(function(){$('waitText').style.display='none';$('greeting').style.display='block';}, 2000);
 }
 
 var lastFeltDate;
@@ -26,8 +26,14 @@ function addFeel(e, eventType){
     			'&hover=' + hover;
 
 	var localFeelObj = {'x':x,'y':y,'hover':hover,'keypress':keypress,'username':globalNickname,'date':new Date().toLocaleString()};
-    visualize_click_single(localFeelObj);
-    visualize_keypress_single(localFeelObj);
+    if (eventType == 'click') 
+		visualize_click_single(localFeelObj);
+	else if (eventType = 'keypress') {
+		if(String.fromCharCode(keypress).length == 0) //don't add the shift key and other non printables
+				return;
+			else
+				visualize_keypress_single(localFeelObj);
+		}
 	
 	
 	var feelAction = function(){
@@ -41,8 +47,8 @@ function addFeel(e, eventType){
 				
 				//log('LOGGED:' + Object.toJSON(feelObj));
 				
-				$('totalFeels').textContent = 'Total Feels: ' + statisticsObj.totalFeels;
-				document.title = appName + ' - ' + statisticsObj.totalFeels + 'Feels';
+				gloalFeelCount = statisticsObj.totalFeels;
+				updateDisplay();
 			/* $('lastText').textContent = 'Last Text:' + statisticsObj.lastText;*/
 			},
 			onFailure: function(transport){
@@ -97,7 +103,7 @@ function feels_getTop100(){
         onSuccess: function(transport){
             try {
                 data_feelObjects = eval(transport.responseText);
-				gloalFeelCount = data_feelObjects.length;
+				//gloalFeelCount = data_feelObjects.length;
 				updateDisplay();
                 log('LOADED feels objects [' + data_feelObjects.length + ']')
             } 
@@ -115,7 +121,7 @@ function feels_getTop100(){
 }
 
 function visualize_clicks(){
-    log('Visualizing clicks for ' + data_feelObjects.length + ' feels...')
+   // log('Visualizing clicks for ' + data_feelObjects.length + ' feels...')
     for (var i = 0; i < data_feelObjects.length; i++) {
         feelObj = data_feelObjects[i];
         if (feelObj.eventType == 'click') 
@@ -124,7 +130,7 @@ function visualize_clicks(){
 }
 
 function visualize_keypresses(){
-    log('Visualizing keypresses for ' + data_feelObjects.length + ' feels...')
+    //log('Visualizing keypresses for ' + data_feelObjects.length + ' feels...')
     for (var i = 0; i < data_feelObjects.length; i++) {
         feelObj = data_feelObjects[i]
         if (feelObj.eventType == 'keypress' && feelObj.keypress != 0) {
@@ -141,7 +147,7 @@ function visualize_mousemove_single(x, y){
 	$(globalNickname+'_icon').style.top = y;
 
 	var touchAction = function(){
-		addFeelUsingStroke(x, y);
+		addStroke(x, y);
 	};
 	
 	if (lastTouchedDate != null) {
@@ -163,17 +169,13 @@ function visualize_mousemove_single(x, y){
 }		
 		
 
-function addFeelUsingStroke(x,y){
-	gloalFeelCount++;
-	updateDisplay();
+function addStroke(x,y){
 	new Ajax.Request('/stroke?x='+x+'&y='+y, {
         method: 'get',
         onSuccess: function(transport){
-			gloalFeelCount++;
-			updateDisplay();
         },
         onFailure: function(transport){
-            log('ERROR in addFeelUsingStroke:[' + transport.status + ']:' + transport.statusText);
+            log('ERROR in addStroke:[' + transport.status + ']:' + transport.statusText);
         }
     });
 }
@@ -233,7 +235,7 @@ function log(s){
 	if(clearLogId > 0)
 		window.clearTimeout(clearLogId);
 	clearLogId = window.setTimeout(function(){ $('log').innerHTML = ''; }, 3000);
- }
+}
 
 ////////
 function updateDisplay(){

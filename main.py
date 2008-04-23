@@ -82,15 +82,25 @@ class MainHandler(webapp.RequestHandler):
         nickname = user.nickname()
     else:
         self.redirect(users.create_login_url(self.request.uri))
-        
+    
+    fq = db.Query(Feel)
+
     template_values = {
       'nickname': nickname,
-      'totalFeels':  db.Query(Feel).count(10000),
-      'data_feelObjects': Json().serializeQuery(DataHandler().getTop100())
+      'totalFeels': fq.filter('eventType =','click').count(1000)+fq.filter('eventType =','keypress').count(1000),
+      #'totalFeels':  db.Query(Feel).filter('eventType =', value) count(10000),
     }
     path = os.path.join(os.path.dirname(__file__), 'index.html')
-    self.response.out.write(template.render(path, template_values))
+#            l=len(ObjectsJSON)
+#        ObjectsJSON =  "[" + ObjectsJSON[0:l-1] + ']'
 
+    mainRenderedHTML = template.render(path, template_values)
+    mainRenderedHTML = mainRenderedHTML[0:len(mainRenderedHTML)-15]
+    
+    self.response.out.write(mainRenderedHTML) #flush main HTML
+#    'data_feelObjects': 
+    dataJS = '<script>var data_feelObjects = eval(\'' + Json().serializeQuery(DataHandler().getTop100()) + '\');</script>'
+    self.response.out.write(dataJS + '</body></html>')
 class TouchHandler(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
@@ -105,8 +115,8 @@ class TouchHandler(webapp.RequestHandler):
     feel.keypress = int(self.request.get('keypress'))
     feel.put()
     
-    feelQuery = db.Query(Feel)
-    totalFeels = feelQuery.count()
+    fq = db.Query(Feel)
+    totalFeels = fq.filter('eventType =','click').count(1000)+fq.filter('eventType =','keypress').count(1000)
 
     self.response.out.write('[' + Json().serializeRow(feel) + ',{"totalFeels":' + str(totalFeels) + '}]')
 
@@ -118,7 +128,10 @@ class DataHandler(webapp.RequestHandler):
   
   def getTop100(self):
       return db.Query(Feel).order("-date").fetch(100)
-  
+
+  def getFeelsAllSortedByDate(self):
+      return db.Query(Feel).order("-date").fetch(250)
+    
   def getLastText(self):
     lastText = ""
     allfeelObjects = feelQuery.fetch(100) #.order("-date").fetch(100)
