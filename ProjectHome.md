@@ -1,0 +1,1 @@
+Users join the site at their pre-determined room id, and start communicating to each other using their mouse to draw and chat.  This app is run on google appengine at [www.mindfeeler.com](http://www.mindfeeler.com)
